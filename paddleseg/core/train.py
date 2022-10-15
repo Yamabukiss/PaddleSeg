@@ -162,7 +162,7 @@ def train(model,
 
     iter = start_iter
     while iter < iters:
-        for data in loader:
+        for data in loader: # single data
             iter += 1
             if iter > iters:
                 version = paddle.__version__
@@ -194,7 +194,7 @@ def train(model,
                         labels=labels,
                         edges=edges,
                         losses=losses)
-                    loss = sum(loss_list)
+                    loss = sum(loss_list) # each pixel
 
                 scaled = scaler.scale(loss)  # scale the loss
                 scaled.backward()  # do backward

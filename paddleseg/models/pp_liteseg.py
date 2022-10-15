@@ -57,8 +57,8 @@ class PPLiteSeg(nn.Layer):
                  arm_type='UAFM_SpAtten',
                  cm_bin_sizes=[1, 2, 4],
                  cm_out_ch=128,
-                 arm_out_chs=[64, 96, 128],
-                 seg_head_inter_chs=[64, 64, 64],
+                 arm_out_chs=[64, 96, 128], # the STDC2 channels in decoder
+                 seg_head_inter_chs=[64, 64, 64], #mid channel between last process output and last output
                  resize_mode='bilinear',
                  pretrained=None):
         super().__init__()
@@ -77,7 +77,7 @@ class PPLiteSeg(nn.Layer):
         assert len(backbone_indices) > 1, "The lenght of backbone_indices " \
             "should be greater than 1"
         self.backbone_indices = backbone_indices  # [..., x16_id, x32_id]
-        backbone_out_chs = [backbone.feat_channels[i] for i in backbone_indices]
+        backbone_out_chs = [backbone.feat_channels[i] for i in backbone_indices] #choose stage1/2/3 features's channel
 
         # head
         if len(arm_out_chs) == 1:
@@ -104,19 +104,19 @@ class PPLiteSeg(nn.Layer):
     def forward(self, x):
         x_hw = paddle.shape(x)[2:]
 
-        feats_backbone = self.backbone(x)  # [x2, x4, x8, x16, x32]
+        feats_backbone = self.backbone(x)  # [x2, x4, x8, x16, x32] CONV1 CONV2 STAGE3 STAGE4 STAGE5
         assert len(feats_backbone) >= len(self.backbone_indices), \
             f"The nums of backbone feats ({len(feats_backbone)}) should be greater or " \
             f"equal than the nums of backbone_indices ({len(self.backbone_indices)})"
 
-        feats_selected = [feats_backbone[i] for i in self.backbone_indices]
+        feats_selected = [feats_backbone[i] for i in self.backbone_indices] # STAGE3 STAGE4 STAGE5
 
-        feats_head = self.ppseg_head(feats_selected)  # [..., x8, x16, x32]
+        feats_head = self.ppseg_head(feats_selected)  # [..., x8, x16, x32]  # the output of the backbone feature map
 
         if self.training:
             logit_list = []
 
-            for x, seg_head in zip(feats_head, self.seg_heads):
+            for x, seg_head in zip(feats_head, self.seg_heads): # head module process features map and the last output head process
                 x = seg_head(x)
                 logit_list.append(x)
 
@@ -154,16 +154,16 @@ class PPLiteSegHead(nn.Layer):
                  arm_type, resize_mode):
         super().__init__()
 
-        self.cm = PPContextModule(backbone_out_chs[-1], cm_out_ch, cm_out_ch,
+        self.cm = PPContextModule(backbone_out_chs[-1], cm_out_ch, cm_out_ch, #  here for Simple Pyramid Pooling Module SPPM
                                   cm_bin_sizes)
 
         assert hasattr(layers,arm_type), \
             "Not support arm_type ({})".format(arm_type)
         arm_class = eval("layers." + arm_type)
 
-        self.arm_list = nn.LayerList()  # [..., arm8, arm16, arm32]
+        self.arm_list = nn.LayerList()  # [..., arm8, arm16, arm32]  # here for Attention Fusion Module
         for i in range(len(backbone_out_chs)):
-            low_chs = backbone_out_chs[i]
+            low_chs = backbone_out_chs[i] # STAGE3 STAGE4 STAGE5 channels 256 512 1024
             high_ch = cm_out_ch if i == len(
                 backbone_out_chs) - 1 else arm_out_chs[i + 1]
             out_ch = arm_out_chs[i]
@@ -171,7 +171,7 @@ class PPLiteSegHead(nn.Layer):
                 low_chs, high_ch, out_ch, ksize=3, resize_mode=resize_mode)
             self.arm_list.append(arm)
 
-    def forward(self, in_feat_list):
+    def forward(self, in_feat_list): # present the stage3/4/5 feature map
         """
         Args:
             in_feat_list (List(Tensor)): Such as [x2, x4, x8, x16, x32].
@@ -182,10 +182,10 @@ class PPLiteSegHead(nn.Layer):
                 The length of in_feat_list and out_feat_list are the same.
         """
 
-        high_feat = self.cm(in_feat_list[-1])
+        high_feat = self.cm(in_feat_list[-1]) # do for the STAGE5
         out_feat_list = []
 
-        for i in reversed(range(len(in_feat_list))):
+        for i in reversed(range(len(in_feat_list))): # the UAFM operation now
             low_feat = in_feat_list[i]
             arm = self.arm_list[i]
             high_feat = arm(low_feat, high_feat)
@@ -212,12 +212,12 @@ class PPContextModule(nn.Layer):
                  inter_channels,
                  out_channels,
                  bin_sizes,
-                 align_corners=False):
+                 align_corners=False): #inter_channels==out_channels
         super().__init__()
 
         self.stages = nn.LayerList([
             self._make_stage(in_channels, inter_channels, size)
-            for size in bin_sizes
+            for size in bin_sizes #1 2 4 present the sppm 's 3 output size after avg pool
         ])
 
         self.conv_out = layers.ConvBNReLU(

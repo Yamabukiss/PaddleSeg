@@ -179,7 +179,9 @@ class UAFM_SpAtten(UAFM):
             y (Tensor): The high level feature.
         """
         atten = helper.avg_max_reduce_channel([x, y])
+        #atten == Fcat = Concat(Mean(Fup), Max(Fup),Mean(Flow), Max(Flow))
         atten = F.sigmoid(self.conv_xy_atten(atten))
+        # α = Sigmoid(Conv(Fcat))
 
         out = x * atten + y * (1 - atten)
         out = self.conv_out(out)

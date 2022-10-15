@@ -44,7 +44,7 @@ class STDCNet(nn.Layer):
 
     def __init__(self,
                  base=64,
-                 layers=[4, 5, 3],
+                 layers=[4, 5, 3], # STDC1->[2,2,2]
                  block_num=4,
                  type="cat",
                  relative_lr=1.0,
@@ -55,7 +55,7 @@ class STDCNet(nn.Layer):
         elif type == "add":
             block = AddBottleneck
         self.layers = layers
-        self.feat_channels = [base // 2, base, base * 4, base * 8, base * 16]
+        self.feat_channels = [base // 2, base, base * 4, base * 8, base * 16] # present the channel of conv1....stage5
         self.features = self._make_layers(base, layers, block_num, block, relative_lr)
 
         self.pretrained = pretrained
@@ -70,25 +70,27 @@ class STDCNet(nn.Layer):
         x = self.features[0](x)
         out_feats.append(x)
         x = self.features[1](x)
-        out_feats.append(x)
+        out_feats.append(x)   #CONV1 CONV2
 
         idx = [[2, 2 + self.layers[0]],
                [2 + self.layers[0], 2 + sum(self.layers[0:2])],
                [2 + sum(self.layers[0:2]), 2 + sum(self.layers)]]
+        # STDC1: idx=[[2,4],[4,6],[6,8]]
         for start_idx, end_idx in idx:
             for i in range(start_idx, end_idx):
-                x = self.features[i](x)
-            out_feats.append(x)
+                x = self.features[i](x) # through the block
+            out_feats.append(x) # out_feats == CONV1 CONV2 STAGE1 STAGE2 STAGE3
 
         return out_feats
 
     def _make_layers(self, base, layers, block_num, block, relative_lr):
         features = []
-        features += [ConvBNRelu(3, base // 2, 3, 2, relative_lr)]
-        features += [ConvBNRelu(base // 2, base, 3, 2, relative_lr)]
+        features += [ConvBNRelu(3, base // 2, 3, 2, relative_lr)] #3 32 CONVX1
+        features += [ConvBNRelu(base // 2, base, 3, 2, relative_lr)] # 32 64  CONVX2
 
-        for i, layer in enumerate(layers):
-            for j in range(layer):
+        for i, layer in enumerate(layers): # STC1:[2,2,2]  # represent the 3 stage
+            # the first stride is 2 for downsample
+            for j in range(layer): # j for num of block
                 if i == 0 and j == 0:
                     features.append(block(base, base * 4, block_num, 2, relative_lr))
                 elif j == 0:
@@ -100,7 +102,7 @@ class STDCNet(nn.Layer):
                         block(base * int(math.pow(2, i + 2)), base * int(
                             math.pow(2, i + 2)), block_num, 1, relative_lr))
 
-        return nn.Sequential(*features)
+        return nn.Sequential(*features) #CONV1 CONV2 2 OF STAGE3/4/5 FROM BLOCK
 
     def init_weight(self):
         for layer in self.sublayers():

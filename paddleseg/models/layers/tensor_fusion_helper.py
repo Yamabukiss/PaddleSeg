@@ -99,6 +99,7 @@ def avg_max_reduce_channel_helper(x, use_concat=True):
     mean_value = paddle.mean(x, axis=1, keepdim=True)
     max_value = paddle.max(x, axis=1, keepdim=True)
 
+
     if use_concat:
         res = paddle.concat([mean_value, max_value], axis=1)
     else:
