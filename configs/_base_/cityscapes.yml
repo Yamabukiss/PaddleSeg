@@ -3,8 +3,13 @@ iters: 80000
 
 train_dataset:
   type: Cityscapes
-  dataset_root: D:\Edge下载\data_2022
-#  transforms:
+  dataset_root: D:\PaddleSeg\PaddleSeg\data\road
+  transforms:
+    - type: Resize
+      target_size: [ 512,256 ]
+    - type: RandomHorizontalFlip
+    - type: RandomDistort
+      brightness_range: 0.5
 #    - type: ResizeStepScaling
 #      min_scale_factor: 0.5
 #      max_scale_factor: 2.0
@@ -16,14 +21,16 @@ train_dataset:
 #      brightness_range: 0.4
 #      contrast_range: 0.4
 #      saturation_range: 0.4
-#    - type: Normalize
+    - type: Normalize
   mode: train
 
 val_dataset:
   type: Cityscapes
-  dataset_root: D:\Edge下载\data_2022
+  dataset_root: D:\PaddleSeg\PaddleSeg\data\road
   transforms:
     - type: Normalize
+    - type: Resize
+      target_size: [512,256]
   mode: val
 
 

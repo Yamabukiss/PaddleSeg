@@ -27,7 +27,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Model training')
     # params of training
     parser.add_argument(
-        "--config", dest="cfg", help="The config file.", default=None, type=str)
+        "--config", dest="cfg", help="The config file.", default="D:\PaddleSeg\PaddleSeg\configs\pp_liteseg\pp_liteseg_stdc1_cityscapes_1024x512_scale0.5_160k.yml", type=str)
     parser.add_argument(
         '--iters',
         dest='iters',
@@ -51,7 +51,7 @@ def parse_args():
         dest='save_interval',
         help='How many iters to save a model snapshot once during training.',
         type=int,
-        default=1000)
+        default=1)
     parser.add_argument(
         '--resume_model',
         dest='resume_model',
@@ -80,6 +80,7 @@ def parse_args():
         '--do_eval',
         dest='do_eval',
         help='Eval while training',
+        default=1,
         action='store_true')
     parser.add_argument(
         '--log_iters',
@@ -101,7 +102,7 @@ def parse_args():
         type=int)
     parser.add_argument(
         "--precision",
-        default="fp32",
+        default="fp16",
         type=str,
         choices=["fp32", "fp16"],
         help="Use AMP (Auto mixed precision) if precision='fp16'. If precision='fp32', the training is normal."

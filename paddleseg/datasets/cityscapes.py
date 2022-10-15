@@ -46,7 +46,7 @@ class Cityscapes(Dataset):
         mode (str, optional): Which part of dataset to use. it is one of ('train', 'val', 'test'). Default: 'train'.
         edge (bool, optional): Whether to compute edge while training. Default: False
     """
-    NUM_CLASSES = 19
+    NUM_CLASSES = 4
 
     def __init__(self, transforms, dataset_root, mode='train', edge=False):
         self.dataset_root = dataset_root
@@ -55,7 +55,7 @@ class Cityscapes(Dataset):
         mode = mode.lower()
         self.mode = mode
         self.num_classes = self.NUM_CLASSES
-        self.ignore_index = 255
+        self.ignore_index = 0
         self.edge = edge
 
         if mode not in ['train', 'val', 'test']:
@@ -66,8 +66,8 @@ class Cityscapes(Dataset):
         if self.transforms is None:
             raise ValueError("`transforms` is necessary, but it is None.")
 
-        img_dir = os.path.join(self.dataset_root, 'leftImg8bit')
-        label_dir = os.path.join(self.dataset_root, 'gtFine')
+        img_dir = os.path.join(self.dataset_root, 'images')
+        label_dir = os.path.join(self.dataset_root, 'labels')
         if self.dataset_root is None or not os.path.isdir(
                 self.dataset_root) or not os.path.isdir(
                     img_dir) or not os.path.isdir(label_dir):
@@ -77,10 +77,11 @@ class Cityscapes(Dataset):
 
         label_files = sorted(
             glob.glob(
-                os.path.join(label_dir, mode, '*',
-                             '*_gtFine_labelTrainIds.png')))
+                os.path.join(label_dir, mode,
+                             '*.png')))
+
         img_files = sorted(
-            glob.glob(os.path.join(img_dir, mode, '*', '*_leftImg8bit.png')))
+            glob.glob(os.path.join(img_dir, mode, '*.jpg')))
 
         self.file_list = [
             [img_path, label_path]
