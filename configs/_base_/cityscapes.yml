@@ -2,8 +2,10 @@ batch_size: 2
 iters: 80000
 
 train_dataset:
-  type: Cityscapes
+  type: Dataset
+  num_classes: 4
   dataset_root: D:\PaddleSeg\PaddleSeg\data\road
+  train_path: D:\PaddleSeg\PaddleSeg\data\road\train.txt
   transforms:
     - type: Resize
       target_size: [ 512,256 ]
@@ -25,8 +27,10 @@ train_dataset:
   mode: train
 
 val_dataset:
-  type: Cityscapes
+  type: Dataset
+  num_classes: 4
   dataset_root: D:\PaddleSeg\PaddleSeg\data\road
+  val_path: D:\PaddleSeg\PaddleSeg\data\road\val.txt
   transforms:
     - type: Normalize
     - type: Resize

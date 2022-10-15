@@ -32,14 +32,12 @@ def parse_args():
         '--iters',
         dest='iters',
         help='iters for training',
-        type=int,
-        default=None)
+        type=int)
     parser.add_argument(
         '--batch_size',
         dest='batch_size',
         help='Mini batch size of one gpu or cpu',
-        type=int,
-        default=None)
+        type=int)
     parser.add_argument(
         '--learning_rate',
         dest='learning_rate',
@@ -50,8 +48,7 @@ def parse_args():
         '--save_interval',
         dest='save_interval',
         help='How many iters to save a model snapshot once during training.',
-        type=int,
-        default=1)
+        type=int)
     parser.add_argument(
         '--resume_model',
         dest='resume_model',
@@ -80,13 +77,12 @@ def parse_args():
         '--do_eval',
         dest='do_eval',
         help='Eval while training',
-        default=1,
         action='store_true')
     parser.add_argument(
         '--log_iters',
         dest='log_iters',
         help='Display logging information at every log_iters',
-        default=10,
+        default=1,
         type=int)
     parser.add_argument(
         '--use_vdl',
@@ -133,7 +129,7 @@ def parse_args():
         '--device',
         dest='device',
         help='Device place to be set, which can be GPU, XPU, NPU, CPU',
-        default='gpu',
+        default='cpu',
         type=str)
 
     return parser.parse_args()

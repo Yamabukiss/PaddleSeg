@@ -118,7 +118,7 @@ class PPLiteSeg(nn.Layer):
 
             for x, seg_head in zip(feats_head, self.seg_heads): # head module process features map and the last output head process
                 x = seg_head(x)
-                logit_list.append(x)
+                logit_list.append(x) # STAGE3 STAGE4 STAGE5 after last head output (....,num_classes)
 
             logit_list = [
                 F.interpolate(
@@ -126,7 +126,7 @@ class PPLiteSeg(nn.Layer):
                 for x in logit_list
             ]
         else:
-            x = self.seg_heads[0](feats_head[0])
+            x = self.seg_heads[0](feats_head[0]) #STAGE3 WITH STAGE5
             x = F.interpolate(x, x_hw, mode='bilinear', align_corners=False)
             logit_list = [x]
 
